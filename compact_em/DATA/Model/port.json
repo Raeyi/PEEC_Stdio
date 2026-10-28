@@ -1,0 +1,8 @@
+{
+  "meshFile": "em.msh",
+  "meshSha256": "d1df38b51e87276914b249bf7cacf7ee297e6410d34e17e177463d5d8ffad0dc",
+  "ports": [
+    {"impedanceOhm": 120, "direction": [0, 0, 1], "triangleIds": [9936, 4478]},
+    {"impedanceOhm": 120, "direction": [0, 0, -1], "triangleIds": [4477, 9935]}
+  ]
+}

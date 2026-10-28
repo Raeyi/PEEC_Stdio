@@ -1,0 +1,23 @@
+# ===== 构建与打包产物 =====
+# task_layer 的编译输出与交付目录，都由脚本生成，不入库
+task_layer/build/
+task_layer/dist/
+
+# ===== 编辑器 =====
+.vscode/
+
+# ===== 后端程序 =====
+# compact_em / gds2geo 是外部团队交付的二进制（合计约 140 MB，含 84 MB 的 gmsh.exe）。
+# 体积大且由对方发布，不纳入版本控制；需要运行包请用 tools/package.ps1 产出，
+# 或从各自的发布包获取后放到对应目录。
+# 若确实要把它们也纳入版本控制，注释掉下面几行即可。
+compact_em/*.exe
+gds2geo/*.exe
+gds2geo/*.dll
+
+# ===== 算例运行产物 =====
+# 每次运行生成，单个 model.peec 可达 GB 级，且会被下一轮覆盖
+**/DATA/Result/
+**/DATA/runtime/
+**/.peec-data.lock
+**/*.lock

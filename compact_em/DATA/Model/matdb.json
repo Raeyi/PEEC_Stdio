@@ -1,0 +1,62 @@
+{
+  "materials": [
+    {
+      "dimension": "volume",
+      "id": 1,
+      "name": "UPPER",
+      "properties": {
+        "conductivity": {
+          "model": "constant",
+          "unit": "S/m",
+          "value": 1e+16
+        }
+      },
+      "type": "C"
+    },
+    {
+      "dimension": "volume",
+      "id": 2,
+      "name": "LOWER",
+      "properties": {
+        "conductivity": {
+          "model": "constant",
+          "unit": "S/m",
+          "value": 1e+16
+        }
+      },
+      "type": "C"
+    },
+    {
+      "dimension": "surface",
+      "id": 3,
+      "name": "UPPER__Surface_0.0005mm",
+      "properties": {
+        "conductivity": {
+          "model": "constant",
+          "unit": "S/m",
+          "value": 1e+16
+        }
+      },
+      "thickness": 0.0005,
+      "thicknessUnit": "mm",
+      "type": "C"
+    },
+    {
+      "dimension": "surface",
+      "id": 4,
+      "name": "LOWER__Surface_0.0005mm",
+      "properties": {
+        "conductivity": {
+          "model": "constant",
+          "unit": "S/m",
+          "value": 1e+16
+        }
+      },
+      "thickness": 0.0005,
+      "thicknessUnit": "mm",
+      "type": "C"
+    }
+  ],
+  "nextId": 5,
+  "schemaVersion": 3
+}

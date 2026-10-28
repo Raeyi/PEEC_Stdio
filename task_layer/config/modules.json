@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "modules": {
+    "peec.model_extract": {
+      "displayName": "等效电路模型 · PEEC 提取",
+      "kind": "external",
+      "command": "PEEC_Model_Extractor.exe",
+      "searchDirs": ["{MODULE_ROOT}/compact_em", "{MODULE_ROOT}/electromagnetic", "{MODULE_ROOT}/Compact_pipeline"],
+      "args": ["--data-root", "{DATA}", "--export", "post,report"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{Model}/*.msh", "{Model}/matdb.json", "{Model}/port.json", "{Setting}/set.txt"],
+        "optional": []
+      },
+      "outputCheck": {
+        "files": ["{Result}/model.peec", "{Result}/extract.state"],
+        "allRequired": true
+      },
+      "layerRead": ["L1", "L2"],
+      "layerWrite": ["L3"]
+    },
+    "peec.solver": {
+      "displayName": "等效电路模型 · 频域求解",
+      "kind": "external",
+      "command": "PEEC_Solver.exe",
+      "searchDirs": ["{MODULE_ROOT}/compact_em", "{MODULE_ROOT}/electromagnetic", "{MODULE_ROOT}/Compact_pipeline"],
+      "args": ["--data-root", "{DATA}", "--export", "post,touchstone"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{Result}/model.peec", "{Setting}/set.txt"],
+        "optional": []
+      },
+      "outputCheck": {
+        "files": ["{Result}/S_parameter.csv", "{Result}/solve.state"],
+        "allRequired": true
+      },
+      "layerRead": ["L3"],
+      "layerWrite": ["L4"]
+    },
+    "peec.plotter": {
+      "displayName": "等效电路模型 · S 参数绘图",
+      "kind": "external",
+      "command": "PEEC_S_Parameter_Plotter.exe",
+      "searchDirs": ["{MODULE_ROOT}/compact_em", "{MODULE_ROOT}/electromagnetic", "{MODULE_ROOT}/Compact_pipeline"],
+      "args": ["--data-root", "{DATA}", "--format", "svg"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{Result}/S_parameter.csv"],
+        "optional": []
+      },
+      "outputCheck": {
+        "files": ["{Result}/S_Parameter_Plot/S_para_mag_port1.svg"],
+        "allRequired": false
+      },
+      "layerRead": ["L4"],
+      "layerWrite": ["L4"]
+    },
+    "peec.post": {
+      "displayName": "等效电路模型 · 源/场后处理",
+      "kind": "external",
+      "command": "PEEC_Post_Processing.exe",
+      "searchDirs": ["{MODULE_ROOT}/compact_em", "{MODULE_ROOT}/electromagnetic", "{MODULE_ROOT}/Compact_pipeline"],
+      "args": ["--data-root", "{DATA}", "--source-plots", "j,qe,ve", "--parts", "mag"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{Result}/Post_Model.txt", "{Result}/Post_Source.txt"],
+        "optional": ["{Model}/Space_Mesh.msh"]
+      },
+      "outputCheck": {
+        "files": ["{Result}/Source_Plot/Source.msh"],
+        "allRequired": false
+      },
+      "layerRead": ["L4"],
+      "layerWrite": ["L4"]
+    },
+    "phys.model_parse": {
+      "displayName": "物理模型解析（GDS2GEO 源模型）",
+      "kind": "external",
+      "command": "gds2geo.exe",
+      "searchDirs": ["{MODULE_ROOT}/gds2geo"],
+      "workingDir": "{MODULE_ROOT}/gds2geo",
+      "args": ["source",
+               "--gds", "{DATA}/Model/model.gds",
+               "--tech", "{DATA}/Model/model_info.csv",
+               "--output-dir", "{DATA}/Result/source"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{DATA}/Model/model.gds"],
+        "optional": ["{DATA}/Model/model_info.csv", "{DATA}/Model/model_info.xtf"]
+      },
+      "outputCheck": {
+        "files": ["{DATA}/Result/source/model.geo",
+                  "{DATA}/Result/source/model.json",
+                  "{DATA}/Result/source/matdb.json"],
+        "allRequired": true
+      },
+      "layerRead": [],
+      "layerWrite": ["L1"]
+    },
+    "gds.prepare": {
+      "displayName": "几何准备（热/电磁目标派生）",
+      "kind": "external",
+      "command": "geo_prepare.exe",
+      "searchDirs": ["{MODULE_ROOT}/gds2geo"],
+      "workingDir": "{MODULE_ROOT}/gds2geo",
+      "args": ["--input-dir", "{DATA}/Result/source",
+               "--output-dir", "{DATA}/Result/prepared"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{DATA}/Result/source/model.geo",
+                     "{DATA}/Result/source/model.json",
+                     "{DATA}/Result/source/matdb.json"],
+        "optional": []
+      },
+      "outputCheck": {
+        "files": ["{DATA}/Result/prepared/em.geo",
+                  "{DATA}/Result/prepared/em.json",
+                  "{DATA}/Result/prepared/matdb.json"],
+        "allRequired": true
+      },
+      "layerRead": ["L1"],
+      "layerWrite": ["L1"]
+    },
+    "gds.mesh_em": {
+      "displayName": "电磁网格生成",
+      "kind": "external",
+      "command": "geo2em.exe",
+      "searchDirs": ["{MODULE_ROOT}/gds2geo"],
+      "workingDir": "{MODULE_ROOT}/gds2geo",
+      "args": ["--input-dir", "{DATA}/Result/prepared",
+               "--output-dir", "{DATA}/Result/em"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{DATA}/Result/prepared/em.geo",
+                     "{DATA}/Result/prepared/em.json",
+                     "{DATA}/Result/prepared/matdb.json"],
+        "optional": []
+      },
+      "outputCheck": {
+        "files": ["{DATA}/Result/em/model_em.msh",
+                  "{DATA}/Result/em/matdb.json"],
+        "allRequired": true
+      },
+      "layerRead": ["L1"],
+      "layerWrite": ["L1"]
+    },
+    "gds.mesh_thermal": {
+      "displayName": "热网格生成（可选）",
+      "kind": "external",
+      "command": "geo2thermal.exe",
+      "searchDirs": ["{MODULE_ROOT}/gds2geo"],
+      "workingDir": "{MODULE_ROOT}/gds2geo",
+      "args": ["--input-dir", "{DATA}/Result/prepared",
+               "--output-dir", "{DATA}/Result/thermal"],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{DATA}/Result/prepared/thermal.geo",
+                     "{DATA}/Result/prepared/thermal.json",
+                     "{DATA}/Result/prepared/matdb.json"],
+        "optional": []
+      },
+      "outputCheck": {
+        "files": ["{DATA}/Result/thermal/model_thermal.msh",
+                  "{DATA}/Result/thermal/matdb.json"],
+        "allRequired": true
+      },
+      "layerRead": ["L1"],
+      "layerWrite": ["L1"]
+    },
+    "internal.handoff": {
+      "displayName": "GDS→EM 交接（网格/材料/端口/设置）",
+      "kind": "internal",
+      "command": "gds2em_handoff",
+      "searchDirs": [],
+      "args": [],
+      "timeoutSec": 0,
+      "inputContract": {
+        "required": ["{DATA}/Result/em/*.msh", "{DATA}/Result/em/matdb.json"],
+        "optional": ["{PORT_JSON}", "{SET_FILE}"]
+      },
+      "outputCheck": {
+        "files": ["{Model}/*.msh", "{Model}/matdb.json", "{Setting}/set.txt"],
+        "allRequired": true
+      },
+      "layerRead": ["L1"],
+      "layerWrite": ["L1", "L2"]
+    },
+    "sim.solver": {
+      "displayName": "仿真求解（MNA/ALPS，待接入）",
+      "kind": "dll",
+      "command": "sim_solver.dll",
+      "workerHost": "{BIN}/worker_host.exe",
+      "searchDirs": ["{BIN}/modules/sim_solver"],
+      "args": [],
+      "timeoutSec": 0,
+      "inputContract": { "required": [], "optional": [] },
+      "outputCheck": { "files": [], "allRequired": false },
+      "layerRead": ["L3"],
+      "layerWrite": ["L4"]
+    },
+    "opt.optimizer": {
+      "displayName": "优化计算（伴随灵敏度，待接入）",
+      "kind": "dll",
+      "command": "opt_optimizer.dll",
+      "workerHost": "{BIN}/worker_host.exe",
+      "searchDirs": ["{BIN}/modules/opt_optimizer"],
+      "args": [],
+      "timeoutSec": 0,
+      "inputContract": { "required": [], "optional": [] },
+      "outputCheck": { "files": [], "allRequired": false },
+      "layerRead": ["L2", "L3", "L4"],
+      "layerWrite": ["L1"]
+    },
+    "post.engine": {
+      "displayName": "后处理（场计算/反演导出，待接入）",
+      "kind": "dll",
+      "command": "post_engine.dll",
+      "workerHost": "{BIN}/worker_host.exe",
+      "searchDirs": ["{BIN}/modules/post_engine"],
+      "args": [],
+      "timeoutSec": 0,
+      "inputContract": { "required": [], "optional": [] },
+      "outputCheck": { "files": [], "allRequired": false },
+      "layerRead": ["L4"],
+      "layerWrite": ["L4"]
+    }
+  }
+}

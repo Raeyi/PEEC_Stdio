@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "pipelines": {
+    "peec_basic": {
+      "displayName": "电磁基本链路（PEEC 四段）",
+      "description": "网格/材料/端口校验 → P/L 提取 → 频域求解 → S 参数绘图 + 源/场后处理",
+      "maxParallel": 1,
+      "stages": [
+        { "id": "extract", "module": "peec.model_extract", "name": "PEEC 模型提取", "dependsOn": [] },
+        { "id": "solve", "module": "peec.solver", "name": "频域求解", "dependsOn": ["extract"] },
+        { "id": "plot", "module": "peec.plotter", "name": "S 参数绘图", "dependsOn": ["solve"], "optional": true },
+        { "id": "post", "module": "peec.post", "name": "源/场后处理", "dependsOn": ["solve"], "optional": true }
+      ]
+    },
+    "gds_full": {
+      "displayName": "建模、网格与交接（GDS2GEO + handoff）",
+      "description": "源模型生成 → 几何准备 → 电磁网格（热网格可选）→ 交接给 EM 目录（网格/材料/设置）",
+      "maxParallel": 1,
+      "stages": [
+        { "id": "parse", "module": "phys.model_parse", "name": "物理模型解析（gds2geo）", "dependsOn": [] },
+        { "id": "prepare", "module": "gds.prepare", "name": "几何准备", "dependsOn": ["parse"] },
+        { "id": "mesh_em", "module": "gds.mesh_em", "name": "电磁网格", "dependsOn": ["prepare"] },
+        { "id": "mesh_thermal", "module": "gds.mesh_thermal", "name": "热网格", "dependsOn": ["prepare"], "optional": true },
+        { "id": "handoff", "module": "internal.handoff", "name": "交接给 EM 目录", "dependsOn": ["mesh_em"] }
+      ]
+    },
+    "thermal_te": {
+      "displayName": "热路与热电耦合（预留）",
+      "description": "热路提取 + 电热耦合（模块接入后启用）",
+      "maxParallel": 1,
+      "stages": [
+        { "id": "thermal", "module": "peec.model_extract", "name": "热路提取（占位）", "dependsOn": [] }
+      ]
+    }
+  }
+}
