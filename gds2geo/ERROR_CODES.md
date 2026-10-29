@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | 两处 `gds2geo_setting.json` 同时存在 | `2` | 根目录配置与 `DATA/Setting/` 配置只能保留一处；不要依赖优先级 |
 | `invalid ...gds2geo_setting.json` | `2` | 检查 JSON 语法、两个必需字符串、重复/未知字段及路径；相对路径以 EXE 目录为基准 |
+| 不识别 `--runtime-dir` | `2` | 使用支持此参数的新版本，并将四个 EXE 一并升级；该参数用于四个主阶段 |
 | `ambiguous technology inputs` | `2` | `model_info.csv` 与 `model_info.xtf` 只能保留一份 |
 | `source requires a regular GDS input...` / 缺少自动工艺输入 | `2` | 无参入口需要 `model.gds` 和唯一工艺文件；其他文件名使用 `source --gds ... --tech ... --output-dir ...` |
 | GDS 顶层不唯一、工艺映射或材料输入被拒绝 | `2` 或 `5` | 阅读完整导入报告；明确 `--top-cell`，修正原工艺/材料，不按文件名推断 |
@@ -33,6 +34,8 @@
 | 输出创建、写入或发布失败 | `5` | 核查目录权限、空间、文件占用和路径类型；此码本身不能区分具体系统原因 |
 
 如果 Windows 在进入程序前报告缺少 DLL 或无法启动，应用层尚未运行，不适用上述 CLI 退出码及日志保证。应恢复完整配套运行库，并保持运行包目录结构。
+
+集成到只读 EXE 目录时，应给四个主阶段传入可写的 `--runtime-dir`，将 source、prepared 交接包及网格结果放在外部案例工作区，并保证对应数据共享锁位置可写。该参数不能修复不可写的正式输出目录，也不会移动按数据规范路径定位的共享锁；不能仅靠此参数消费整棵只读安装树内的交接包。运行目录创建或日志记录出现问题时保留完整控制台诊断；相对运行路径按当前工作目录解析，建议宿主传入绝对路径。`--help`、`--version` 不创建运行目录。
 
 ## 显式兼容入口
 
@@ -50,8 +53,8 @@
 
 ## 日志与旧结果
 
-无参运行日志统一位于运行包 `DATA/runtime/`，文件名分别为 `gds2geo.log`、`geo_prepare.log`、`geo2thermal.log`、`geo2em.log`，每次覆盖本程序上次日志；配置 JSON 无效时也使用此位置。显式调用直接输出到终端；需要持久记录时自行重定向。源导入尝试证据另存于 `DATA/runtime/source-attempts/`；某些输入初检失败发生在尝试目录建立之前，应以控制台/无参日志为准。
+未指定 `--runtime-dir` 的无参运行日志统一位于运行包 `DATA/runtime/`，文件名分别为 `gds2geo.log`、`geo_prepare.log`、`geo2thermal.log`、`geo2em.log`，每次覆盖本程序上次日志；配置 JSON 无效时也使用此位置。未指定运行目录的显式调用保持只输出到终端。传入 `--runtime-dir PATH` 后，默认模式和显式主阶段均在 PATH 下直接记录对应程序日志，源导入尝试证据位于 PATH 的 `source-attempts/`。某些输入初检失败发生在尝试目录建立之前，应以控制台和本次程序日志为准。
 
-本包的程序锁位于 `DATA/runtime/`，数据包共锁按层级存放于 `DATA/runtime/locks/`，例如 `Result/source/.gds2geo-model.lock`。锁文件不是错误标记，运行时不要删除。外部数据的共锁仍按数据目录定位；其规范父目录为便携包根时也归入 `DATA/runtime/`。没有 `DATA/Setting` 布局的旧程序目录保持原 runtime 规则。
+本包缺省程序锁位于 `DATA/runtime/`，数据包共锁按层级存放于 `DATA/runtime/locks/`，例如 `Result/source/.gds2geo-model.lock`。指定 `--runtime-dir` 时，仅程序私有锁及 `work/.pending/` 暂存等运行文件转入指定目录，数据包共锁仍按数据规范路径定位；不同运行目录访问同一数据包仍互斥。锁文件不是错误标记，运行时不要删除。外部数据的共锁仍按数据目录定位；其规范父目录为便携包根时也归入 `DATA/runtime/`。没有 `DATA/Setting` 布局的旧程序目录保持原 runtime 规则。
 
 失败时保留该阶段上一组可用正式结果，因此看到旧文件并不能证明本次成功。修正原因后重新运行失败阶段，并根据上游变化重跑必要下游。不得混用不同代的 GEO、JSON、MATDB、MSH 或 receipt。
