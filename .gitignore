@@ -11,9 +11,9 @@ task_layer/dist/
 # 体积大且由对方发布，不纳入版本控制；需要运行包请用 tools/package.ps1 产出，
 # 或从各自的发布包获取后放到对应目录。
 # 若确实要把它们也纳入版本控制，注释掉下面几行即可。
-compact_em/*.exe
-gds2geo/*.exe
-gds2geo/*.dll
+# compact_em/*.exe
+# gds2geo/*.exe
+# gds2geo/*.dll
 
 # ===== 算例运行产物 =====
 # 每次运行生成，单个 model.peec 可达 GB 级，且会被下一轮覆盖
